@@ -11,3 +11,6 @@ def get_origins() -> list[str]:
 
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 FRONTEND_ORIGINS = get_origins()
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "rajputprateeksingh075@gmail.com").strip().lower()
+ADMIN_TOKEN_SECRET = os.getenv("ADMIN_TOKEN_SECRET", "").strip()
