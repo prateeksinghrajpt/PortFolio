@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { ArrowDown, ArrowDownRight, ArrowRight, ArrowUpRight, BrainCircuit, Check, Code2, Database, Github, Linkedin, Mail, Menu, Server, Sparkles, Workflow, X, Zap } from 'lucide-react'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
@@ -114,4 +115,19 @@ function ResumeAccurateApp() {
 
 void App
 
-export default ResumeAccurateApp
+const aboutStrengths = [
+  { title: 'AI Engineering', items: 'AI agents, LLM integration, RAG pipelines, LangChain, LangGraph, prompt engineering, and MCP.' },
+  { title: 'Backend Engineering', items: 'Python, FastAPI, REST APIs, PostgreSQL, Redis, authentication, RBAC, and modular services.' },
+  { title: 'Cloud & Infrastructure', items: 'Microsoft Azure, Azure OpenAI, Azure AI Search, Document Intelligence, Docker, and CI/CD.' },
+]
+
+function ProfessionalAbout() {
+  const [target, setTarget] = useState<HTMLElement | null>(null)
+  useEffect(() => setTarget(document.getElementById('about')), [])
+  if (!target) return null
+  return createPortal(<><style>{`#about > .section-heading,#about > .about-grid{display:none}.professional-about{animation:about-enter .45s ease-out}@keyframes about-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.professional-about .strength-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:22px}.professional-about .strength-card{border:1px solid var(--line);border-radius:10px;padding:21px;background:#0c1421}.professional-about .strength-card h4{margin:0 0 11px;font-size:13px}.professional-about .strength-card p{margin:0;color:#8f9fb7;font-size:11px;line-height:1.8}@media(max-width:640px){.professional-about .strength-grid{grid-template-columns:1fr}.professional-about .about-main{padding:23px}}`}</style><div className="professional-about"><div className="section-heading"><div><span className="section-kicker">01 / ABOUT</span><h2>Engineering intelligent systems.<br /><span className="muted-heading">Building reliable backends.</span></h2></div><p className="section-intro">An AI and backend engineer who turns complex engineering problems into production-ready software systems.</p></div><div className="about-grid"><div className="about-main"><div className="about-mark"><Sparkles size={22} /></div><h3>AI systems built with engineering discipline.</h3><p>I'm an NIT Surat graduate and Member of Technical Staff at CCTech, working at the intersection of AI engineering and Python backend development. I build LLM-powered applications, agentic workflows, and scalable APIs for real-world engineering problems.</p><p>My focus goes beyond calling an LLM API: I design the document-processing, retrieval, orchestration, validation, data, and backend layers that make AI systems reliable, maintainable, and useful from proof of concept through deployment.</p><div className="about-tags"><span>1.5+ years experience</span><span>NIT Surat</span><span>AI + backend systems</span></div></div><div className="timeline"><div className="timeline-line" /><div className="timeline-item"><span className="timeline-dot active" /><div><span className="timeline-date">SEP 2025 — PRESENT</span><h4>Member of Technical Staff</h4><p className="timeline-company">CCTech · AI Engineering & Python Backend</p><p>Building AI-powered engineering workflows for document processing, rule extraction, duplicate-rule detection, design validation, backend APIs, and MCP-based code-generation integrations.</p></div></div><div className="timeline-item"><span className="timeline-dot" /><div><span className="timeline-date">ENGINEERING APPROACH</span><h4>From complex requirements to dependable software</h4><p className="timeline-company">Production-oriented AI applications</p><p>Translating engineering requirements into modular services, reliable data flows, validation logic, and maintainable applications.</p></div></div></div></div><div className="strength-grid">{aboutStrengths.map((strength) => <article className="strength-card" key={strength.title}><h4>{strength.title}</h4><p>{strength.items}</p></article>)}</div></div></>, target)
+}
+
+function Portfolio() { return <><ResumeAccurateApp /><ProfessionalAbout /></> }
+
+export default Portfolio
