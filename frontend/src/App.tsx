@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowDown, ArrowDownRight, ArrowRight, ArrowUpRight, BrainCircuit, Check, Code2, Database, Github, Linkedin, Mail, Menu, Server, Sparkles, Workflow, X, Zap } from 'lucide-react'
+import { ArrowDown, ArrowDownRight, ArrowRight, ArrowUpRight, Bell, BrainCircuit, Check, Code2, Database, Github, Linkedin, Mail, Menu, Server, Sparkles, Workflow, X, Zap } from 'lucide-react'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
 
@@ -128,6 +128,47 @@ function ProfessionalAbout() {
   return createPortal(<><style>{`#about > .section-heading,#about > .about-grid{display:none}.professional-about{animation:about-enter .45s ease-out}@keyframes about-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.professional-about .strength-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:22px}.professional-about .strength-card{border:1px solid var(--line);border-radius:10px;padding:21px;background:#0c1421}.professional-about .strength-card h4{margin:0 0 11px;font-size:13px}.professional-about .strength-card p{margin:0;color:#8f9fb7;font-size:11px;line-height:1.8}@media(max-width:640px){.professional-about .strength-grid{grid-template-columns:1fr}.professional-about .about-main{padding:23px}}`}</style><div className="professional-about"><div className="section-heading"><div><span className="section-kicker">01 / ABOUT</span><h2>Engineering intelligent systems.<br /><span className="muted-heading">Building reliable backends.</span></h2></div><p className="section-intro">An AI and backend engineer who turns complex engineering problems into production-ready software systems.</p></div><div className="about-grid"><div className="about-main"><div className="about-mark"><Sparkles size={22} /></div><h3>AI systems built with engineering discipline.</h3><p>I'm an NIT Surat graduate and Member of Technical Staff at CCTech, working at the intersection of AI engineering and Python backend development. I build LLM-powered applications, agentic workflows, and scalable APIs for real-world engineering problems.</p><p>My focus goes beyond calling an LLM API: I design the document-processing, retrieval, orchestration, validation, data, and backend layers that make AI systems reliable, maintainable, and useful from proof of concept through deployment.</p><div className="about-tags"><span>1.5+ years experience</span><span>NIT Surat</span><span>AI + backend systems</span></div></div><div className="timeline"><div className="timeline-line" /><div className="timeline-item"><span className="timeline-dot active" /><div><span className="timeline-date">SEP 2025 — PRESENT</span><h4>Member of Technical Staff</h4><p className="timeline-company">CCTech · AI Engineering & Python Backend</p><p>Building AI-powered engineering workflows for document processing, rule extraction, duplicate-rule detection, design validation, backend APIs, and MCP-based code-generation integrations.</p></div></div><div className="timeline-item"><span className="timeline-dot" /><div><span className="timeline-date">ENGINEERING APPROACH</span><h4>From complex requirements to dependable software</h4><p className="timeline-company">Production-oriented AI applications</p><p>Translating engineering requirements into modular services, reliable data flows, validation logic, and maintainable applications.</p></div></div></div></div><div className="strength-grid">{aboutStrengths.map((strength) => <article className="strength-card" key={strength.title}><h4>{strength.title}</h4><p>{strength.items}</p></article>)}</div></div></>, target)
 }
 
-function Portfolio() { return <><ResumeAccurateApp /><ProfessionalAbout /></> }
+type ContactMessage = { id: number; name: string; email: string; message: string; created_at: string }
+
+function AdminDashboard() {
+  const googleButton = useRef<HTMLDivElement>(null)
+  const [token, setToken] = useState(() => localStorage.getItem('portfolio_admin_token') || '')
+  const [messages, setMessages] = useState<ContactMessage[]>([])
+  const [error, setError] = useState('')
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+
+  const loadMessages = async (sessionToken: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/admin/messages`, { headers: { Authorization: `Bearer ${sessionToken}` } })
+    if (!response.ok) throw new Error(response.status === 401 ? 'Your admin session has expired. Please sign in again.' : 'Could not load messages.')
+    setMessages(await response.json())
+  }
+
+  useEffect(() => { if (token) loadMessages(token).catch((reason: Error) => { setError(reason.message); localStorage.removeItem('portfolio_admin_token'); setToken('') }) }, [token])
+  useEffect(() => {
+    if (token || !clientId || !googleButton.current) return
+    const onCredential = async (response: { credential: string }) => {
+      setError('')
+      try {
+        const login = await fetch(`${API_BASE_URL}/api/admin/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ credential: response.credential }) })
+        const data = await login.json().catch(() => ({}))
+        if (!login.ok) throw new Error(data.detail || 'Sign-in was not accepted.')
+        localStorage.setItem('portfolio_admin_token', data.token); setToken(data.token)
+      } catch (reason) { setError(reason instanceof Error ? reason.message : 'Sign-in failed.') }
+    }
+    const render = () => {
+      const google = (window as typeof window & { google?: any }).google
+      if (!google || !googleButton.current) return
+      google.accounts.id.initialize({ client_id: clientId, callback: onCredential })
+      google.accounts.id.renderButton(googleButton.current, { theme: 'filled_blue', size: 'large', text: 'signin_with', width: 280 })
+    }
+    const existing = document.querySelector('script[data-google-identity]')
+    if (existing) { render(); return }
+    const script = document.createElement('script'); script.src = 'https://accounts.google.com/gsi/client'; script.async = true; script.dataset.googleIdentity = 'true'; script.onload = render; document.head.appendChild(script)
+  }, [clientId, token])
+
+  return <main className="admin-page"><style>{`.admin-page{min-height:100vh;padding:48px 6.5%;color:#e8edf7;background:#080d18}.admin-shell{width:min(100%,980px);margin:auto}.admin-top{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:30px}.admin-top h1{margin:0;font-size:clamp(28px,4vw,42px)}.admin-bell{position:relative;border:1px solid var(--line);background:#101a2b;color:#dceaff;border-radius:9px;padding:12px;cursor:pointer}.admin-count{position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#3988f0;color:#06101f;font-size:10px;font-weight:800}.admin-login,.message-card{border:1px solid var(--line);background:#0d1422;border-radius:12px;padding:28px}.admin-login{max-width:440px;margin:11vh auto}.admin-login h2{margin-top:0}.admin-login p,.message-meta{color:#8f9fb7;line-height:1.7;font-size:13px}.admin-error{color:#ff9a9a;margin-top:14px}.message-list{display:grid;gap:13px}.message-card h3{margin:0 0 5px;font-size:16px}.message-card p{white-space:pre-wrap;line-height:1.65;margin:15px 0 0}.admin-actions{display:flex;gap:10px;align-items:center}.admin-actions button{border:1px solid var(--line);background:transparent;color:#dceaff;padding:10px 13px;border-radius:7px;cursor:pointer}@media(max-width:640px){.admin-page{padding:28px 6.5%}.admin-top{align-items:flex-start}.admin-login,.message-card{padding:20px}}`}</style><div className="admin-shell">{!token ? <section className="admin-login"><span className="section-kicker">PRIVATE ADMIN</span><h2>Portfolio inbox</h2><p>Sign in with the authorized Google account to view recruiter messages.</p>{clientId ? <div ref={googleButton} /> : <p className="admin-error">Google sign-in is not configured yet. Add VITE_GOOGLE_CLIENT_ID in Vercel.</p>}{error && <p className="admin-error">{error}</p>}</section> : <><header className="admin-top"><div><span className="section-kicker">PRIVATE ADMIN</span><h1>Recruiter messages</h1></div><div className="admin-actions"><button className="admin-bell" aria-label="Message inbox" onClick={() => loadMessages(token).catch((reason: Error) => setError(reason.message))}><Bell size={21} /><span className="admin-count">{messages.length}</span></button><button onClick={() => { localStorage.removeItem('portfolio_admin_token'); setToken(''); setMessages([]) }}>Sign out</button></div></header>{error && <p className="admin-error">{error}</p>}<section className="message-list">{messages.length ? messages.map((message) => <article className="message-card" key={message.id}><h3>{message.name}</h3><div className="message-meta"><a href={`mailto:${message.email}`}>{message.email}</a> · {new Date(message.created_at).toLocaleString()}</div><p>{message.message}</p></article>) : <article className="message-card"><h3>No messages yet</h3><p className="message-meta">New contact-form submissions will appear here.</p></article>}</section></>}</div></main>
+}
+
+function Portfolio() { return window.location.pathname === '/admin' ? <AdminDashboard /> : <><ResumeAccurateApp /><ProfessionalAbout /></> }
 
 export default Portfolio
